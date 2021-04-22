@@ -9,4 +9,4 @@ app.config["DEBUG"] = True
 def home():
     return jsonify({'Status': 'OK!'})
 
-app.run()
+app.run(host="0.0.0.0")
