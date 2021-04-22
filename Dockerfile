@@ -9,4 +9,4 @@ RUN python -m pip install --upgrade pip
 RUN python -m pip install --default-timeout=100 -r /requirements.txt
 
 WORKDIR /work
-CMD ["make", "boot-app"]
+CMD make boot-app && /bin/bash

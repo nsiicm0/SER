@@ -57,7 +57,8 @@ create-container:
 start-container: 
 	@echo "$$START_DOCKER_CONTAINER" | $(SHELL)
 	@echo "Launched $(CONTAINER_NAME)..."
-	$(DOCKER) attach $(CONTAINER_NAME)
+	@echo ">>>>>>>>>>>>>>>> Exit the current container with CTRL+P, CTRL+Q"
+	$(DOCKER) attach --sig-proxy=false $(CONTAINER_NAME)
 
 ## Attach to the running container
 attach: start-container
@@ -69,7 +70,6 @@ boot-app:
 	-@echo ">>>>>>>>>>>>>>>> Started the API screen! Reattach using screen -r API"
 	-@echo ">>>>>>>>>>>>>>>> Started the JUPTYER screen! Reattach using screen -r JUPYTER"
 	-@echo ">>>>>>>>>>>>>>>> Attach to the JUPYTER screen to get the auth token! Detach screens using CTRL+A, D"
-	-/bin/bash
 
 ## Remove the Docker Container
 clean-docker: clean-container 
