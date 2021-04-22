@@ -23,7 +23,7 @@ class Dataset(object):
     """
 
 
-    class _is(object):
+    class __is(object):
         """
             The Condition object is used internally to automate condition checks which guard the functions.
         """
@@ -63,7 +63,7 @@ class Dataset(object):
         self.data = None
 
 
-    def _check_requirement(self, condition, verbose=True) -> bool:
+    def __check_requirement(self, condition, verbose=True) -> bool:
         """Internal function that checks whether certain conditions are met."""
         _logger.debug(f'Checking condition: {condition}')
         condition_satisfied = False
@@ -84,12 +84,19 @@ class Dataset(object):
             return False
         
 
+    def clean(self) -> None:
+        _logger.info(f'Cleaning the pristine directory. {self.pristine_path}')
+        clean_directory(self.pristine_path)
+        _logger.info(f'Cleaning the working directory. {self.working_path}')
+        clean_directory(self.working_path)
+
+
     def download(self, force=False) -> bool:
         if force:
             _logger.info(f'Forcing download. Removes old files from {self.pristine_path}.')
             clean_directory(self.pristine_path)
         # Check if the dataset has been downloaded already. If not, download it.
-        if not self._check_requirement(self._is.DOWNLOADED, verbose=False):
+        if not self.__check_requirement(self.__is.DOWNLOADED, verbose=False):
             # Download
             try:
                 downloaded_file = download_url(self.remote_url, os.path.join(self.pristine_path, Dataset.DEFAULT_ZIP_NAME))
@@ -109,10 +116,10 @@ class Dataset(object):
             _logger.info(f'Forcing extraction. Removes old files from {self.working_path}.')
             clean_directory(self.working_path)
         # Preliminiary checks
-        if not self._check_requirement(self._is.DOWNLOADED): return False
+        if not self.__check_requirement(self.__is.DOWNLOADED): return False
         
         # Check if the dataset has been extracted. If not, do so.
-        if not self._check_requirement(self._is.EXTRACTED, verbose=False):
+        if not self.__check_requirement(self.__is.EXTRACTED, verbose=False):
             with zipfile.ZipFile(os.path.join(self.pristine_path, Dataset.DEFAULT_ZIP_NAME), 'r') as zipf:
                 zipf.extractall(self.working_path)
 
@@ -126,22 +133,26 @@ class Dataset(object):
             self.data = None
 
         # Preliminary checks
-        if not self._check_requirement(self._is.DOWNLOADED): return False
-        if not self._check_requirement(self._is.EXTRACTED): return False
+        if not self.__check_requirement(self.__is.DOWNLOADED): return False
+        if not self.__check_requirement(self.__is.EXTRACTED): return False
         
         # Check if the dataset has been prepared. If not, do so.
-        if not self._check_requirement(self._is.PREPARED, verbose=False):
+        if not self.__check_requirement(self.__is.PREPARED, verbose=False):
             pass
         
         _logger.info('Dataset prepared.')
         return True
 
+    
+    def load(self, force=False) -> bool:
+        pass
+
 
     def get(self) -> pd.DataFrame:
         # Preliminary checks
-        if not self._check_requirement(self._is.DOWNLOADED): return None
-        if not self._check_requirement(self._is.EXTRACTED): return None
-        if not self._check_requirement(self._is.PREPARED): return None
+        if not self.__check_requirement(self.__is.DOWNLOADED): return None
+        if not self.__check_requirement(self.__is.EXTRACTED): return None
+        if not self.__check_requirement(self.__is.PREPARED): return None
         return self.data
 
 
