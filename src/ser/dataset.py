@@ -1,10 +1,11 @@
 import os
-import io
+
 import zipfile
 import requests
 
 import pandas as pd
 
+import ser
 from ser.utils import get_logger, download_url, clean_directory
 
 _logger = get_logger(__name__)
@@ -30,6 +31,8 @@ class Dataset(object):
         DOWNLOADED = 'download'
         EXTRACTED = 'extract'
         PREPARED = 'prepare'
+        LOADED = 'load'
+        FEATURE_EXTRACTED = 'feature extract'
     
 
     DEFAULT_ZIP_NAME = 'download.zip'
@@ -61,9 +64,12 @@ class Dataset(object):
 
         # The dataset
         self.data = None
+        self.samples = None
+        self.X = None
+        self.y = None
 
 
-    def __check_requirement(self, condition, verbose=True) -> bool:
+    def __check_requirement(self, condition: str, verbose: bool=True) -> bool:
         """Internal function that checks whether certain conditions are met."""
         _logger.debug(f'Checking condition: {condition}')
         condition_satisfied = False
@@ -73,14 +79,16 @@ class Dataset(object):
         elif condition == 'extract':
             condition_satisfied = len(list(filter(lambda x: x != '.gitkeep', os.listdir(self.working_path)))) > 0
         elif condition == 'prepare':
-            condition_satisfied = isinstance(self.data, pd.DataFrame)
+            condition_satisfied = isinstance(self.data, list)
+        else:
+            raise ValueError(f'Invalid condition was provided. Got: {condition}')
 
         if condition_satisfied:
             _logger.debug(f'Met conditions for "{condition}"')
             return True
         else:
             if verbose:
-                _logger.warning(f'Apparently, the dataset has not yet been {condition}ed. Use .{condition}() to {condition} it first.')
+                _logger.warning(f'Apparently, the dataset has not yet been {condition}ed. Use .{condition.replace(" ", "_")}() to {condition} it first.')
             return False
         
 
@@ -91,7 +99,7 @@ class Dataset(object):
         clean_directory(self.working_path)
 
 
-    def download(self, force=False) -> bool:
+    def download(self, force: bool=False) -> bool:
         if force:
             _logger.info(f'Forcing download. Removes old files from {self.pristine_path}.')
             clean_directory(self.pristine_path)
@@ -111,7 +119,7 @@ class Dataset(object):
         return True
 
 
-    def extract(self, force=False) -> bool:
+    def extract(self, force: bool=False) -> bool:
         if force:
             _logger.info(f'Forcing extraction. Removes old files from {self.working_path}.')
             clean_directory(self.working_path)
@@ -127,7 +135,7 @@ class Dataset(object):
         return True
 
 
-    def prepare(self, force=False) -> bool:
+    def prepare(self, force: bool=False) -> list:
         if force:
             _logger.info(f'Forcing preparation. Flushes data variable.')
             self.data = None
@@ -138,13 +146,18 @@ class Dataset(object):
         
         # Check if the dataset has been prepared. If not, do so.
         if not self.__check_requirement(self.__is.PREPARED, verbose=False):
-            pass
+            files = os.listdir(os.path.join(self.working_path, 'wav'))
+            self.data = list(ser.Sample.from_list(files))
         
         _logger.info('Dataset prepared.')
         return True
 
     
-    def load(self, force=False) -> bool:
+    def load(self, force: bool=False) -> bool:
+        pass
+
+    
+    def feature_extract(self, force: bool=False) -> bool:
         pass
 
 
@@ -154,5 +167,4 @@ class Dataset(object):
         if not self.__check_requirement(self.__is.EXTRACTED): return None
         if not self.__check_requirement(self.__is.PREPARED): return None
         return self.data
-
 
