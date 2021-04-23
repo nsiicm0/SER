@@ -3,6 +3,8 @@ import sys
 import shutil
 import logging
 import requests
+import numpy as np
+from typing import Union, Callable
 
 
 def get_logger(name: str, level: int=logging.INFO):
@@ -74,3 +76,59 @@ def clean_directory(path: str, exclude: list=['.gitkeep']):
                 shutil.rmtree(f)
         except Exception as e:
             raise IOError(f'Failed to delete {f}. Reason: {e}')
+
+
+def split_criterion(elements: list, split: Union[Callable, int]=min):
+    """
+        Helper function return a split value.
+        This is used in the dataset preparation.
+
+        elements: list
+            The list to do calculations on.
+        split: Callable or int
+            A callable if we want to calculate on the elements list.
+            Else, a static int (will be returned as is).
+            Note: if you want to get the average, provide a lambda expression -> lambda x: sum(x)/len(x)
+    """
+    if callable(split):
+        return split(elements)
+    elif isinstance(split, int):
+        return split
+    else:
+        raise ValueError(f'Invalid split type provided. Got: {type(split)} - {split}')
+
+
+def find_peak_amplitude(samples: list):
+    """Returns the max amplitude of multiple samples.
+    
+    samples: list
+        A list of pydub.AudioFrame samples.
+
+    Returns a tuple of the max amplitude see more here: https://github.com/jiaaro/pydub/blob/master/API.markdown#audiosegmentmax
+    """
+    max_value = -np.inf
+    max_dbfs = -np.inf
+    for sample in samples:
+        max_value = sample.max if max_value < sample.max else max_value
+        max_dbfs = sample.max_dBFS if max_dbfs < sample.max_dBFS else max_dbfs
+    return (max_value, max_dbfs)
+
+
+def one_hot_encode(values: list, unique: list) -> np.ndarray:
+    """One-hot encodes values given a unique set of values.
+
+    values: object
+        The list of values to one-hot encode
+    unique: list
+        A set of unique values
+    
+    """
+    if not all(value in unique for value in values):
+        raise ValueError(f'Invalide set of values and unique values provided. All values MUST exist in the unique set. ')
+    if len(unique) != len(set(unique)):
+        raise ValueError(f'The provided unique set of values does not appear to be unique! Got: {unique} -> {set(unique)}')
+    if not isinstance(values[0], str):
+        raise ValueError(f'Currently only string values supported.')
+    # Convert to int_values
+    int_values = np.array([list(unique).index(v) for v in values])
+    return np.eye(len(unique))[int_values]
