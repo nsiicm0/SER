@@ -4,6 +4,7 @@ import shutil
 import logging
 import requests
 import numpy as np
+import random, string
 from typing import Union, Callable
 
 
@@ -132,3 +133,10 @@ def one_hot_encode(values: list, unique: list) -> np.ndarray:
     # Convert to int_values
     int_values = np.array([list(unique).index(v) for v in values])
     return np.eye(len(unique))[int_values]
+
+
+def get_random_name(length: int=16) -> str:
+    """Generates a random name.
+    Used for the model name and the API.
+    """
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
