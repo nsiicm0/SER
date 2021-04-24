@@ -7,3 +7,4 @@ from .model import SERBaseModel as BaseModel
 from .model import SERRandomForestClassifier as RandomForestClassifier
 from .model import SERXGBoostClassifier as XGBoostClassifer
 from .model import SERKerasClassifier as KerasClassifier
+from .model import SERKerasDropoutClassifier as KerasDropoutClassifier

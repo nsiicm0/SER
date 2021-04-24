@@ -3,9 +3,15 @@ import sys
 import shutil
 import logging
 import requests
-import numpy as np
 import random, string
 from typing import Union, Callable
+
+import sklearn
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+
+import ser
 
 
 def get_logger(name: str, level: int=logging.INFO):
@@ -140,3 +146,78 @@ def get_random_name(length: int=16) -> str:
     Used for the model name and the API.
     """
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def plot_conf_mat(y_test: np.ndarray, y_pred: np.ndarray, clazzes: list, nice_clazzes: list=None) -> None:
+    """Plots a confusion matrix
+
+    y_test: np.ndarray
+        The Groundtruth
+    y_pred: np.ndarray
+        The predicitons
+    clazzes: list
+        The classes of the model (i.e. retrieved from clf.classes_)
+    nice_clazzes: list
+        A nicer and more readable representation of the classes.
+    """
+    if nice_clazzes is None:
+        nice_clazzes = clazzes
+    cm = confusion_matrix(y_test, y_pred, labels=clazzes)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=nice_clazzes)
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(15, 15))
+    disp.plot(include_values=True, cmap='viridis', ax=ax, xticks_rotation='horizontal')
+    plt.show()
+
+
+def score_clf(clf: 'BaseModel', X_test: np.ndarray, y_test: np.ndarray, clazzes_mapping: dict=None, is_from_gridsearch: bool=True) -> None:
+    """Scores and evaluates a classifier.
+
+    clf: ser.BaseModel
+        A fitted classifier.
+    X_test: np.ndarray
+        Features to score
+    y_test: np.ndarray
+        The groundtruth for the features.
+    clazzes_mapping: dict
+        A mapping of the clazzes of the classifier to a nice representation.    
+    """
+    best_clf = clf if not is_from_gridsearch else clf.best_estimator_
+    y_pred = clf.predict(X_test)
+    if clazzes_mapping is not None:
+        target_emotions = [clazzes_mapping[clazz] for clazz in best_clf.classes_]
+        # plot confusion matrix
+        plot_conf_mat(y_test, y_pred, clazzes=best_clf.classes_, nice_clazzes=target_emotions)
+        # print classification report
+        print(classification_report(y_test, y_pred, target_names=target_emotions))
+    else:
+        plot_conf_mat(y_test, y_pred, clazzes=best_clf.classes_)
+        # print classification report
+        print(classification_report(y_test, y_pred, target_names=best_clf.classes_))
+    
+
+
+def plot_history(hist):
+    """Plots the history of a Keras trained model.
+    
+    hist: History
+        The Keras history object.
+    """
+    plt.clf()
+    fig, ax1 = plt.subplots(figsize=(10,10))
+    ax1.set_xlabel('Epochs')
+    ax1.set_ylabel('Accuracy')
+    ax1.plot(hist.history["accuracy"], label='Train Accuracy', color='xkcd:purple', linestyle='dashed')
+    if 'val_accuracy' in hist.history:
+        ax1.plot(hist.history["val_accuracy"], label='Validation Accuracy', color='xkcd:purple', linestyle='solid')
+    ax1.tick_params(axis='y')
+    ax1.legend(loc='upper left')
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Loss')
+    ax2.plot(hist.history["loss"], label='Train Loss', color='xkcd:green', linestyle='dashed')
+    if 'val_loss' in hist.history:
+        ax2.plot(hist.history["val_loss"], label='Validation Loss', color='xkcd:green', linestyle='solid')
+    ax2.tick_params(axis='y')
+    ax2.legend(loc='lower left')
+    fig.tight_layout()
+    plt.show()
