@@ -13,9 +13,11 @@ from sklearn.utils.multiclass import unique_labels
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Activation
 from tensorflow.keras.optimizers import Adam
+from tensorflow.python.keras.layers import deserialize, serialize
+from tensorflow.python.keras.saving import saving_utils
 
 from ser.utils import get_logger, get_random_name
 
@@ -54,6 +56,8 @@ class SERBaseModel(object):
         
 
     def save_model(self):
+        #_logger.info(self.__dict__)
+        #_logger.info({k: type(v) for k, v in self.__dict__.items()})
         if os.path.exists(self.model_save_path):
             _logger.warning(f'Found an existing model. Will delete the old one.')
             os.unlink(self.model_save_path)
@@ -227,25 +231,38 @@ class KerasBaseClassifier(tf.keras.wrappers.scikit_learn.KerasClassifier):
                 state["model"] = tf.keras.models.load_model(file)
         self.__dict__ = state
 
+#
+#   Begin Fix to make all Keras models serializable and fix issues with serialization of the TFStack Summary.
+#   Copied from: https://github.com/tensorflow/tensorflow/issues/34697#issuecomment-627193883
+#   The following functions basically override the tf.keras Model class.
+# 
+def unpack(model, training_config, weights):
+    restored_model = deserialize(model)
+    if training_config is not None:
+        restored_model.compile(
+            **saving_utils.compile_args_from_training_config(
+                training_config
+            )
+        )
+    restored_model.set_weights(weights)
+    return restored_model
 
-class PickleableKerasClassifier(tf.keras.wrappers.scikit_learn.KerasClassifier):
 
-    def __getstate__(self):
-        state = self.__dict__
-        model = state['model']
-        bio = io.BytesIO()
-        with h5py.File(bio) as f:
-            model.save(f)
-        state['model'] = bio
-        return_state = copy.deepcopy(state)
-        state['model'] = model
-        return return_state
+def make_keras_picklable():
 
-    def __setstate__(self, state):
-        with h5py.File(state['model']) as f:
-            state['model'] = tf.keras.models.load_model(f)
-        self.__dict__ = state
+    def __reduce__(self):
+        model_metadata = saving_utils.model_metadata(self)
+        training_config = model_metadata.get("training_config", None)
+        model = serialize(self)
+        weights = self.get_weights()
+        return (unpack, (model, training_config, weights))
 
+    cls = Model
+    cls.__reduce__ = __reduce__
+
+#
+#   End Fix
+#
 
 class SERKerasClassifier(SERBaseModel, KerasBaseClassifier):
     """
@@ -261,6 +278,7 @@ class SERKerasClassifier(SERBaseModel, KerasBaseClassifier):
         return clf
     
     def __init__(self, save_path, name=None, *args, **kwargs):
+        make_keras_picklable()
         KerasBaseClassifier.__init__(self, *args, **kwargs)
         SERBaseModel.__init__(self, save_path, name)
 
@@ -281,5 +299,6 @@ class SERKerasDropoutClassifier(SERBaseModel, KerasBaseClassifier):
         return clf
 
     def __init__(self, save_path, name=None, *args, **kwargs):
+        make_keras_picklable()
         KerasBaseClassifier.__init__(self, *args, **kwargs)
         SERBaseModel.__init__(self, save_path, name)

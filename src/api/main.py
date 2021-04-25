@@ -1,9 +1,17 @@
+import os
+import sys
+if os.path.join(os.getcwd(), 'src') not in sys.path:
+    # depending on where we launch the app, make sure we can see our code
+    sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+
 import flask
+from flask_restful import Api
 from flask import json, request, jsonify
-from werkzeug.exceptions import HTTPException
+
+from api.resources import Train, Predict
 
 app = flask.Flask(__name__)
-app.config['DEBUG'] = False
+app.config['DEBUG'] = True
 
 @app.errorhandler(Exception)
 def handle_all_exceptions(e):
@@ -21,13 +29,10 @@ def home():
         'Available Endpoints': [f'/{rule.endpoint}' for rule in app.url_map.iter_rules() if rule.endpoint not in ['home', 'static']]
     })
 
-@app.route('/train', methods=['GET'])
-def train():
-    raise Exception('test')
-    return jsonify({'Status': 'OK!'})
+API = Api(app)
+API.add_resource(Train, '/train')
+API.add_resource(Predict, '/predict')
 
-@app.route('/predict', methods=['GET'])
-def predict():
-    return jsonify({'Status': 'OK!'})
 
-app.run(host='0.0.0.0')
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')

@@ -79,6 +79,7 @@ class Dataset(object):
         self.__loaded_data = None
         self.X = None
         self.y = None
+        self.N = None
 
         self.normalization_max_value = 0
 
@@ -133,7 +134,8 @@ class Dataset(object):
 
     def download(
             self, 
-            force: bool=False
+            force: bool=False,
+            **kwargs
         ) -> bool:
         """Download function to download the data specified at the remote_url.
 
@@ -161,7 +163,8 @@ class Dataset(object):
 
     def extract(
             self, 
-            force: bool=False
+            force: bool=False,
+            **kwargs
         ) -> bool:
         """Extract function to extract the ZIP file into the working folder.
 
@@ -185,7 +188,8 @@ class Dataset(object):
 
     def prepare(
             self, 
-            force: bool=False
+            force: bool=False,
+            **kwargs
         ) -> list:
         """Prepare function to wrap all files in a Sample object.
 
@@ -212,7 +216,8 @@ class Dataset(object):
             self, 
             split_at: Union[Callable, int, None]=min, 
             normalize: bool=True, 
-            force: bool=False
+            force: bool=False,
+            **kwargs
         ) -> bool:
         """Load function to load the wav files to the RAM.
         The function also provides options to split the files into equally sized chunks (incl. padding) and normalization of the audio.
@@ -269,9 +274,10 @@ class Dataset(object):
     def feature_extract(
             self, 
             extraction_methods: dict={
-                'SpeakerAndGenderAndTextType': (ser.SpeakerAndGenderAndTextTypeFeatureExtractor, {'speaker':True, 'gender': True, 'text': True}), 
+                'SpeakerAndGenderAndTextType': (ser.SpeakerAndGenderAndTextTypeFeatureExtractor, {'speaker': True, 'gender': True, 'text': True}), 
                 'MFCC': (ser.MFCCFeatureExtractor, {'num_cepstral': 13})}, 
-            force: bool=False
+            force: bool=False,
+            **kwargs
         ) -> bool:
         """Feature Extraction function to extract features from the audio.
 
@@ -288,7 +294,7 @@ class Dataset(object):
         """
         if force:
             _logger.info(f'Forcing feature extraction. Flushes X, y variable.')
-            self.X, self.y = None, None
+            self.X, self.y, self.N = None, None, None
         
         # Preliminary checks
         if not self.__check_requirements([self.__is.DOWNLOADED, self.__is.EXTRACTED, self.__is.PREPARED, self.__is.LOADED]): return False
@@ -308,6 +314,7 @@ class Dataset(object):
             combined_features = list()
             for _features in zip(*features):
                 combined_features.append(np.concatenate(_features))
+            self.N = np.array([sample.get('name') for sample in self.__loaded_data])
             self.X = np.array(combined_features)
             self.y = np.array(targets)[:1][0] # since we already made sure that extractions provided the same amount of samples, we just grab the first target set
             
@@ -315,12 +322,19 @@ class Dataset(object):
         return True
 
 
-    def get_features(self) -> Tuple[tuple, tuple]:
-        """Returns the Tuple of X and y values."""
+    def get_features(self, return_names: bool=False) -> Tuple[tuple, tuple]:
+        """Returns the Tuple of X and y values.
+        
+        return_names: bool
+            Returns the names of the samples too.
+        """
         # Preliminary checks
         if not self.__check_requirements([self.__is.DOWNLOADED, self.__is.EXTRACTED, self.__is.PREPARED, self.__is.LOADED, self.__is.FEATURE_EXTRACTED]): return False
 
-        return self.X, self.y
+        if return_names:
+            return self.X, self.y, self.N
+        else:
+            return self.X, self.y
 
     def get_raw_data(self) -> list:
         """Returns the raw data after it has been prepared."""

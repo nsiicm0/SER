@@ -8,3 +8,5 @@ from .model import SERRandomForestClassifier as RandomForestClassifier
 from .model import SERXGBoostClassifier as XGBoostClassifer
 from .model import SERKerasClassifier as KerasClassifier
 from .model import SERKerasDropoutClassifier as KerasDropoutClassifier
+from .trainer import Trainer
+from .predictor import Predictor
