@@ -2,11 +2,13 @@
 
 This repository contains the codebase used for the Use Case Challange as part of the job application for "Machine Learning Engineer (Intern)".
 
-This repository is private due to confidentiality reasons.
+This repository is private due to confidentiality reasons. Due to the extensive amount of time used, this codebase does not use unit tests. Obviously, this is something that would not be done in a production environment.
 
 ## How to use
 
-You can access the API on localhost:5000
+The application is controlled by a Makefile. Simply type `make` to see all available rules. Use `make init` to start the docker container.
+The docker container will start with two screens. One running the jupyter server and the other the flask server. You can access them using `screen -r API` or `screen -r JUPYTER` (exit the screens using CTRL+A, D) once attached to the container (`make attach`, detach using CTRL+P, CTRL+Q). The container will forward the ports 5000 (API) and 8888 (JUPYTER).
+
 
 ### `/train` Endpoint
 
@@ -42,7 +44,7 @@ The `/predict` endpoint expects a POST request with a body like this:
 {
     model_save_path: <path to model folder>         # mandatory, the path holds the pickles of the model and the training config
     model_id: <model id>                            # mandatory, the ID of the train cycle. (received from the train endpoint response)
-    sample_name: <FILENAME>                         # mandatory, the name of the sample to predict. Must be part of the validation set. Is also retrieved from the train endpoint response.
+    sample_name: <FILENAME>                         # mandatory, the name of the sample to predict. Must be part of the validation set. It is also retrieved from the train endpoint response.
 
 }
 ```
