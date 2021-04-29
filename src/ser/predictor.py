@@ -5,7 +5,7 @@ import numpy as np
 
 from ser.exception import PredictorException
 from ser.utils import get_logger
-from ser import KerasClassifier, KerasDropoutClassifier
+from ser import Pipeline
 
 _logger = get_logger(__name__)
 
@@ -45,35 +45,7 @@ class Predictor(object):
         self.training_conf = pickle.load(open(config_path, 'rb'))
         # load the model
         _logger.info('Loading model')
-        if self.training_conf['model_type'] == 'KerasClassifier':
-            self.model = KerasClassifier.load_from_name(
-                save_path=self.model_save_path, 
-                name=self.model_id,
-                build_fn=lambda: KerasClassifier.build(
-                    n_classes=len(self.training_conf['classes']),
-                    lr=self.training_conf['model_config']['lr'],
-                    input_dim=(np.array(self.training_conf['X_test'])).shape[1]
-                ),
-                epochs=self.training_conf['model_config']['epochs'],
-                batch_size=self.training_conf['model_config']['batch_size'],
-                verbose=0
-            )
-        elif self.training_conf['model_type'] == 'KerasDropoutClassifier':
-            self.model = KerasDropoutClassifier.load_from_name(
-                save_path=self.model_save_path, 
-                name=self.model_id,
-                build_fn=lambda: KerasDropoutClassifier.build(
-                    n_classes=len(self.training_conf['classes']),
-                    lr=self.training_conf['model_config']['lr'],
-                    input_dim=(np.array(self.training_conf['X_test'])).shape[1],
-                    dropout=self.training_conf['model_config']['dropout']
-                ),
-                epochs=self.training_conf['model_config']['epochs'],
-                batch_size=self.training_conf['model_config']['batch_size'],
-                verbose=0
-            )
-        else:
-            raise PredictorException(f'No valid model provided in the training config. Got: {self.training_conf["model_type"]}')
+        self.model = Pipeline.load_from_name(save_path=self.model_save_path, name=self.model_id, steps=[])
         _logger.info('Restore done.')
 
 

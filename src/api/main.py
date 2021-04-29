@@ -17,7 +17,7 @@ app.config['DEBUG'] = True
 def handle_all_exceptions(e):
     response = jsonify({
         'message': 'An unhandled exception occured',
-        'content': e
+        'content': str(e)
     })
     response.status_code = 500
     return response

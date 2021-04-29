@@ -2,15 +2,41 @@
 
 This repository contains the codebase used for the Use Case Challange as part of the job application for "Machine Learning Engineer (Intern)".
 
-This repository is private due to confidentiality reasons. Due to the extensive amount of time used, this codebase does not use unit tests. Obviously, this is something that would not be done in a production environment.
+This repository is private due to confidentiality reasons. 
+
+**Due to the extensive amount of time used for this project, this codebase does not use unit tests. Obviously, this is something that would not be done in a production environment.**
 
 ## How to use
 
-The application is controlled by a Makefile. Simply type `make` to see all available rules. Use `make init` to start the docker container.
+The application is controlled using a Makefile. Simply type `make` to see all available rules. Use `make init` to start the docker container.
 The docker container will start with two screens. One running the jupyter server and the other the flask server. You can access them using `screen -r API` or `screen -r JUPYTER` (exit the screens using CTRL+A, D) once attached to the container (`make attach`, detach using CTRL+P, CTRL+Q). The container will forward the ports 5000 (API) and 8888 (JUPYTER).
 
+**Note: You will need to enter the JUPYTER screen at least once to get the auth token to access the JUPYTER server.**
+
+### `make`
+
+As mentioned, with make the whole application lifecycle can be controlled.
+```
+Available rules
+
+attach              Attach to the running container 
+boot-app            Starts the SER application (jupyter and flask api) 
+clean               Delete all compiled Python files 
+clean-container     Remove the Docker Container 
+clean-docker        Remove the Docker Container 
+clean-docker-full-only-in-emergency Remove all Docker related data (image and container). Warning: There will be dragons! 
+clean-image         Remove the Docker Image 
+create-container    Create the Docker Container 
+init                Init everything 
+init-docker         Initialize the Docker Image 
+pip-freeze          Fix all installed python modules to requirements.txt 
+start-container     Start the Docker Container 
+update-env          Updates the environment using using the current requirements.txt 
+```
 
 ### `/train` Endpoint
+
+Note: The report covers also Random Forest and XGBoost algorithms. They are not implemented in the API endpoints.
 
 The `/train` endpoint expects a POST request with a body like this:
 
@@ -45,6 +71,9 @@ The `/predict` endpoint expects a POST request with a body like this:
     model_save_path: <path to model folder>         # mandatory, the path holds the pickles of the model and the training config
     model_id: <model id>                            # mandatory, the ID of the train cycle. (received from the train endpoint response)
     sample_name: <FILENAME>                         # mandatory, the name of the sample to predict. Must be part of the validation set. It is also retrieved from the train endpoint response.
-
 }
 ```
+
+## Remarks
+
+The folder `requests` contains sample requests to be used using the macOS app `rested`.

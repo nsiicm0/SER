@@ -1,11 +1,12 @@
 import os
 import base64
-from sklearn.model_selection import train_test_split
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split, GridSearchCV
 import dill as pickle # Allows for better serialization
 
 from ser.exception import TrainerException
 from ser.utils import get_logger, one_hot_encode
-from ser import Sample, Dataset, MFCCFeatureExtractor, SpeakerAndGenderAndTextTypeFeatureExtractor, KerasClassifier, KerasDropoutClassifier
+from ser import Sample, Dataset, MFCCFeatureExtractor, SpeakerAndGenderAndTextTypeFeatureExtractor, KerasClassifier, Pipeline
 
 _logger = get_logger(__name__)
 
@@ -28,12 +29,11 @@ class Trainer(object):
                     'METHOD_NAME': <CONFIG>,                    # METHOD_NAME accepts a valid feature extractor, currently supported: SpeakerAndGenderAndTextType|MFCC
                     ...                                         # CONFIG is the config dict as found in ser.Dataset.feature_extract()
                 },
-                'model_type': <MODEL NAME>,                     # mandatory, currently supported: KerasClassifier|KerasDropoutClassifier
+                'model_type': <MODEL NAME>,                     # mandatory, currently supported: KerasClassifier
                 'model_save_path': <path to model folder>       # mandatory, this is where the model will be saved into (also will hold other training related data)
                 'model_config': <MODEL TRAINING CONFIG>         # optional, elsewise default values will be used.
                                                                 # Default config: {
-                                                                #   'KerasClassifier': {'lr': 0.001, 'epochs': 20, 'batch_size': 32},
-                                                                #   'KerasDropoutClassifier': {'lr': 0.001, 'epochs': 100, 'batch_size': 32, 'dropout': 0.2},
+                                                                #   'KerasClassifier': {'lr': 0.001, 'epochs': 20, 'batch_size': 32, 'dropout': 0.0, 'input_dim': 500},
                                                                 # }
             }
     """
@@ -47,8 +47,7 @@ class Trainer(object):
             self.force = False
         self.model = None
         self.model_default_config = {
-            'KerasClassifier': {'lr': 0.001, 'epochs': 20, 'batch_size': 32},
-            'KerasDropoutClassifier': {'lr': 0.001, 'epochs': 100, 'batch_size': 32, 'dropout': 0.2},
+            'KerasClassifier': {'lr': 0.001, 'epochs': 100, 'batch_size': 32, 'dropout': 0.2, 'input_dim': 100}
         }
         if self.config['model_config'] is None:
             self.model_config = self.model_default_config[self.config['model_type']]
@@ -57,6 +56,8 @@ class Trainer(object):
                 raise TrainerException(f'Invalid model config provided. Make sure to include "lr", "epochs", and "batch_size". Got: {self.config["model_config"]}')
             self.model_config = self.config['model_config']
         self.model_id = None
+        self.pca_step = None
+        self.clf_step = None
         self.X, self.y, self.N, self.X_train, self.X_test, self.y_train, self.y_test, self.N_train, self.N_test, self.y_test_onehot = None, None, None, None, None, None, None, None, None, None
         self.hist = None
     
@@ -122,24 +123,19 @@ class Trainer(object):
         if not os.path.exists(self.config['model_save_path']):
             _logger.info(f'{self.config["model_save_path"]} does not yet exist.')
             os.makedirs(self.config['model_save_path'])
+
+        self.pca_step = PCA(n_components=self.model_config['input_dim'])
+
         if self.config['model_type'] == 'KerasClassifier':
-            self.model = KerasClassifier(
-                save_path=self.config['model_save_path'], 
-                build_fn=lambda: KerasClassifier.build(len(Sample.EMOTIONS), self.model_config['lr'], self.X.shape[1]), 
-                epochs=self.model_config['epochs'], 
-                batch_size=self.model_config['batch_size'], 
-                verbose=0
-            )
-        elif self.config['model_type'] == 'KerasDropoutClassifier':
-            self.model = KerasDropoutClassifier(
-                save_path=self.config['model_save_path'], 
-                build_fn=lambda: KerasDropoutClassifier.build(len(Sample.EMOTIONS), self.model_config['lr'], self.X.shape[1], self.model_config['dropout']), 
+            self.clf_step = KerasClassifier(
+                build_fn=lambda: KerasClassifier.build_base(n_classes=len(Sample.EMOTIONS), **self.model_config), 
                 epochs=self.model_config['epochs'], 
                 batch_size=self.model_config['batch_size'], 
                 verbose=0
             )
         else:
             raise TrainerException(f'An invalid model type was provided. Got: {self.config["model_type"]}')
+        self.model = Pipeline(save_path=self.config['model_save_path'], steps=[('pca', self.pca_step), ('clf', self.clf_step)])
         self.model_id = self.model.model_name
         _logger.info(f'Prepared model with ID {self.model_id}')
 
@@ -152,7 +148,7 @@ class Trainer(object):
         self.X_train, self.X_test, self.y_train, self.y_test, self.N_train, self.N_test = train_test_split(self.X, self.y, self.N, test_size=0.1, random_state=self.config['random_state'])
         self.y_test_onehot = one_hot_encode(self.y_test, Sample.EMOTIONS.keys())
         _logger.info(f'Data shape:\n\tX_train: {self.X_train.shape}\n\ty_train: {self.y_train.shape}\n\tX_test: {self.X_test.shape}\n\ty_test: {self.y_test.shape}')
-        self.hist = self.model.fit(self.X_train, self.y_train, validation_data=(self.X_test, self.y_test_onehot))
+        self.hist = self.model.fit(self.X_train, self.y_train, clf__validation_data=(self.pca_step.fit_transform(self.X_test), self.y_test_onehot))
         _logger.info('Done with model training.')
     
 
