@@ -61,6 +61,10 @@ The `/train` endpoint expects a POST request with a body like this:
     }
 ```
 
+**Example:**
+
+![Train Example Call](./train.png)
+
 ### `/predict` Endpoint
 
 The `/predict` endpoint expects a POST request with a body like this:
@@ -72,6 +76,10 @@ The `/predict` endpoint expects a POST request with a body like this:
     sample_name: <FILENAME>                         # mandatory, the name of the sample to predict. Must be part of the validation set. It is also retrieved from the train endpoint response.
 }
 ```
+
+**Example:**
+
+![Predict Example Call](./predict.png)
 
 ## Remarks
 

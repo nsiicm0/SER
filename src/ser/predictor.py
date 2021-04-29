@@ -56,21 +56,23 @@ class Predictor(object):
         _logger.info(f'Predicting sample: {self.sample_name}')
         # Looking up index
         try:
-            idx = self.training_conf['sample_test'].index(self.sample_name)
+            idx = list()
+            for name in self.sample_name:
+                idx.append(self.training_conf['sample_test'].index(name))
         except ValueError:
             raise PredictorException(f'Provided sample was not part of the validation set. Got: {self.sample_name}')
         # Get features and target
-        X = [self.training_conf['X_test'][idx]]
-        y = [self.training_conf['y_test'][idx]]
+        X = np.array(self.training_conf['X_test'])[idx]
+        y = np.array(self.training_conf['y_test'])[idx]
         
         y_pred = self.model.predict(X)
         y_pred_proba = self.model.predict_proba(X)
 
         response = dict({
             'sample_name': self.sample_name,
-            'ground_truth': y,
+            'ground_truth': y.tolist(),
             'prediction': y_pred.tolist(),
-            'probabilities': {k: v for k, v in zip(self.training_conf['classes'], y_pred_proba.tolist()[0])}
+            'probabilities': [{k: v for k, v in zip(self.training_conf['classes'], proba)} for proba in y_pred_proba.tolist()]
         })
         return response
     

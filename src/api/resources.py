@@ -18,6 +18,18 @@ def boolean_string(s):
         raise ValueError('Not a valid boolean string')
     return s.lower() == 'true'
 
+def str_or_list_parser(s):
+    print(s)
+    try:
+        s = json.loads(s)
+        if isinstance(s, list):
+            return s
+        elif isinstance(s, str):
+            return [s]
+        else:
+            raise ValueError('Invalid argument provided.')
+    except:
+        return s
 
 class Train(Resource):
 
@@ -44,8 +56,8 @@ class Train(Resource):
         trainer.save()
 
         response = {
-            'Model ID': trainer.model_id,
-            'Test Samples': trainer.N_test.tolist()
+            'model_id': trainer.model_id,
+            'test_samples': trainer.N_test.tolist()
         }
         return response, 200
 
@@ -57,10 +69,10 @@ class Predict(Resource):
 
         parser.add_argument('model_save_path', required=True)
         parser.add_argument('model_id', required=True)
-        parser.add_argument('sample_name', required=True)
+        parser.add_argument('sample_name', action="append", type=str_or_list_parser, required=True)
 
         args = dict(parser.parse_args(strict=True))
-
+        print(args['sample_name'])
         predictor = ser.Predictor(
             model_save_path=args['model_save_path'],
             model_id=args['model_id'],

@@ -32,7 +32,7 @@
 			<key>parameter</key>
 			<string>model_id</string>
 			<key>value</key>
-			<string>rbuBDFybJpeise1u</string>
+			<string>nqaYRO119WqF4GLj</string>
 		</dict>
 		<dict>
 			<key>inUse</key>
@@ -40,7 +40,7 @@
 			<key>parameter</key>
 			<string>sample_name</string>
 			<key>value</key>
-			<string>16b01La.wav</string>
+			<string>["15b01Ec.wav", "16b01Fa.wav"]</string>
 		</dict>
 	</array>
 	<key>parametersType</key>
