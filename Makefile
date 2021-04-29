@@ -71,6 +71,10 @@ boot-app:
 	-@echo ">>>>>>>>>>>>>>>> Started the JUPTYER screen! Reattach using screen -r JUPYTER"
 	-@echo ">>>>>>>>>>>>>>>> Attach to the JUPYTER screen to get the auth token! Detach screens using CTRL+A, D"
 
+## Run Tests
+pytest:
+	export PYTHONPATH=./src; pytest
+
 ## Remove the Docker Container
 clean-docker: clean-container 
 
