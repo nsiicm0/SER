@@ -16,23 +16,10 @@ The docker container will start with two screens. One running the jupyter server
 ### `make`
 
 As mentioned, with make the whole application lifecycle can be controlled.
-```
-Available rules:
 
-attach              Attach to the running container 
-boot-app            Starts the SER application (jupyter and flask api) 
-clean-python        Delete all compiled Python files 
-clean               Remove all Docker related data (image and container). Warning: There will be dragons! 
-clean-container     Remove the Docker Container 
-clean-image         Remove the Docker Image 
-create-container    Create the Docker Container 
-init                Init everything 
-init-docker         Initialize the Docker Image 
-pip-freeze          Fix all installed python modules to requirements.txt 
-pytest              Run Tests 
-start-container     Start the Docker Container 
-update-env          Updates the environment using the current requirements.txt 
-```
+To get started, simply run `make init`. For other rules see below:
+
+![Make Rules](./make.png)
 
 ### `/train` Endpoint
 
