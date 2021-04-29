@@ -73,7 +73,7 @@ boot-app:
 
 ## Run Tests
 pytest:
-	export PYTHONPATH=./src; pytest
+	export PYTHONPATH=./src; pytest -vv --disable-warnings
 
 ## Remove the Docker Container
 clean-docker: clean-container 

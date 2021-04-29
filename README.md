@@ -1,10 +1,10 @@
 # SER - Speech Emotion Recognition
 
-This repository contains the codebase used for the Use Case Challange as part of the job application for "Machine Learning Engineer (Intern)".
+This repository contains the codebase used for the Use Case Challenge as part of the job application for "Machine Learning Engineer (Intern)".
 
 This repository is private due to confidentiality reasons. 
 
-**Due to the extensive amount of time used for this project, this codebase does not use unit tests. Obviously, this is something that would not be done in a production environment.**
+**Due to the extensive amount of time used for this project, this codebase only uses basic tests. Obviously, this is something that would not be done in a production environment and would follow proper TDD.**
 
 ## How to use
 
@@ -17,7 +17,7 @@ The docker container will start with two screens. One running the jupyter server
 
 As mentioned, with make the whole application lifecycle can be controlled.
 ```
-Available rules
+Available rules:
 
 attach              Attach to the running container 
 boot-app            Starts the SER application (jupyter and flask api) 
@@ -30,6 +30,7 @@ create-container    Create the Docker Container
 init                Init everything 
 init-docker         Initialize the Docker Image 
 pip-freeze          Fix all installed python modules to requirements.txt 
+pytest              Run Tests 
 start-container     Start the Docker Container 
 update-env          Updates the environment using using the current requirements.txt 
 ```
@@ -41,25 +42,24 @@ Note: The report covers also Random Forest and XGBoost algorithms. They are not 
 The `/train` endpoint expects a POST request with a body like this:
 
 ```
-{
-    'data_path': <path to data folder>,             # mandatory, this is where the data will be saved into
-    'remote_url': <path to the remote file>,        # mandatory, this is where the data zip resides on the remote host
-    'random_state': <int>                           # optional, a random state used for seeding RNGs                         
-    'dataset_force': True|False,                    # optional, would force all function calls in dataset
-    'dataset_load_split_at': 'min|max|avg|<int>',   # optional, see ser.Dataset.load() for more information
-    'dataset_load_normalize': True|False,           # optional, see ser.Dataset.load() for more information
-    'dataset_feature_extract_methods': {            # optional, see ser.Dataset.feature_extract() for more information
-        'METHOD_NAME': <CONFIG>,                    # METHOD_NAME accepts a valid feature extractor, currently supported: SpeakerAndGenderAndTextType|MFCC
-        ...                                         # CONFIG is the config dict as found in ser.Dataset.feature_extract()
-    },
-    'model_type': <MODEL NAME>,                     # mandatory, currently supported: KerasClassifier|KerasDropoutClassifier
-    'model_save_path': <path to model folder>       # mandatory, this is where the model will be saved into (also will hold other training related data)
-    'model_config': <MODEL TRAINING CONFIG>         # optional, elsewise default values will be used.
-                                                    # Default config: {
-                                                    #   'KerasClassifier': {'lr': 0.001, 'epochs': 20, 'batch_size': 32},
-                                                    #   'KerasDropoutClassifier': {'lr': 0.001, 'epochs': 100, 'batch_size': 32, 'dropout': 0.2},
-                                                    # }
-}
+    {
+        'data_path': <path to data folder>,             # mandatory, this is where the data will be saved into
+        'remote_url': <path to the remote file>,        # mandatory, this is where the data zip resides on the remote host
+        'random_state': <int>                           # optional, a random state used for seeding RNGs                         
+        'dataset_force': True|False,                    # optional, would force all function calls in dataset
+        'dataset_load_split_at': 'min|max|avg|<int>',   # optional, see ser.Dataset.load() for more information
+        'dataset_load_normalize': True|False,           # optional, see ser.Dataset.load() for more information
+        'dataset_feature_extract_methods': {            # optional, see ser.Dataset.feature_extract() for more information
+            'METHOD_NAME': <CONFIG>,                    # METHOD_NAME accepts a valid feature extractor, currently supported: SpeakerAndGenderAndTextType|MFCC
+            ...                                         # CONFIG is the config dict as found in ser.Dataset.feature_extract()
+        },
+        'model_type': <MODEL NAME>,                     # mandatory, currently supported: KerasClassifier
+        'model_save_path': <path to model folder>       # mandatory, this is where the model will be saved into (also will hold other training related data)
+        'model_config': <MODEL TRAINING CONFIG>         # optional, elsewise default values will be used.
+                                                        # Default config: {
+                                                        #   'KerasClassifier': {'lr': 0.001, 'epochs': 20, 'batch_size': 32, 'dropout': 0.0, 'input_dim': 500},
+                                                        # }
+    }
 ```
 
 ### `/predict` Endpoint

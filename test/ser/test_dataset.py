@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-import pathlib
 import pytest
 import numpy as np
 import ser
@@ -25,6 +24,7 @@ def common_dataset(common_path):
     del dataset
 
 # test_download
+@pytest.mark.run(order=1)
 def test_download(common_dataset):
     pristine_path = common_dataset.pristine_path
     # check for empty directory
@@ -43,9 +43,11 @@ def test_download(common_dataset):
 
 
 # test_extract
+@pytest.mark.run(order=2)
 def test_extract(common_dataset):
     pristine_path = common_dataset.pristine_path
     working_path = common_dataset.working_path
+    common_dataset.download()
     # check for empty directory
     assert len(list(filter(lambda x: x not in ['.gitkeep'], os.listdir(working_path)))) == 0
     common_dataset.extract()
@@ -63,7 +65,10 @@ def test_extract(common_dataset):
     
 
 # test_prepare
+@pytest.mark.run(order=3)
 def test_prepare(common_dataset):
+    common_dataset.download()
+    common_dataset.extract()
     # check if is not prepared
     assert common_dataset._Dataset__data is None
     # check is prepared
@@ -74,7 +79,11 @@ def test_prepare(common_dataset):
 
 
 # test_load
+@pytest.mark.run(order=4)
 def test_load(common_dataset):
+    common_dataset.download()
+    common_dataset.extract()
+    common_dataset.prepare()
     # check if is not loaded
     assert common_dataset._Dataset__loaded_data is None
     # check is prepared
@@ -85,7 +94,12 @@ def test_load(common_dataset):
 
 
 # test_feature_extract
+@pytest.mark.run(order=5)
 def test_feature_extract(common_dataset):
+    common_dataset.download()
+    common_dataset.extract()
+    common_dataset.prepare()
+    common_dataset.load()
     # check if is not feature extracted
     assert common_dataset.N is None and common_dataset.X is None and common_dataset.y is None
     # check is prepared
