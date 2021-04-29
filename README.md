@@ -21,7 +21,7 @@ Available rules:
 
 attach              Attach to the running container 
 boot-app            Starts the SER application (jupyter and flask api) 
-clean               Delete all compiled Python files 
+clean-python        Delete all compiled Python files 
 clean               Remove all Docker related data (image and container). Warning: There will be dragons! 
 clean-container     Remove the Docker Container 
 clean-image         Remove the Docker Image 
