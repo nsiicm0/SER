@@ -43,7 +43,7 @@ clean:
 #################################################################################
 
 ## Init everything
-init: clean-docker init-docker create-container start-container
+init: clean-container init-docker create-container start-container
 
 ## Initialize the Docker Image
 init-docker: 
@@ -75,11 +75,8 @@ boot-app:
 pytest:
 	export PYTHONPATH=./src; pytest -vv --disable-warnings
 
-## Remove the Docker Container
-clean-docker: clean-container 
-
 ## Remove all Docker related data (image and container). Warning: There will be dragons!
-clean-docker-full-only-in-emergency: clean-container clean-image 
+clean: clean-container clean-image 
 
 ## Remove the Docker Container
 clean-container: 
@@ -94,7 +91,7 @@ clean-image:
 pip-freeze:
 	pip freeze > ./requirements.txt
 
-## Updates the environment using using the current requirements.txt
+## Updates the environment using the current requirements.txt
 update-env: 
 	pip install -r ./requirements.txt --upgrade
 

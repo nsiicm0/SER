@@ -10,29 +10,31 @@ from flask import json, request, jsonify
 
 from api.resources import Train, Predict
 
-app = flask.Flask(__name__)
-app.config['DEBUG'] = True
+def create_app():
+    app = flask.Flask(__name__)
+    app.config['DEBUG'] = False
 
-@app.errorhandler(Exception)
-def handle_all_exceptions(e):
-    response = jsonify({
-        'message': 'An unhandled exception occured',
-        'content': str(e)
-    })
-    response.status_code = 500
-    return response
+    API = Api(app)
+    API.add_resource(Train, '/train')
+    API.add_resource(Predict, '/predict')
 
-@app.route('/', methods=['GET'])
-def home():
-    return jsonify({
-        'Status': 'OK!',
-        'Available Endpoints': [f'/{rule.endpoint}' for rule in app.url_map.iter_rules() if rule.endpoint not in ['home', 'static']]
-    })
+    @app.errorhandler(Exception)
+    def handle_all_exceptions(e):
+        response = jsonify({
+            'message': 'An unhandled exception occured',
+            'content': str(e)
+        })
+        response.status_code = 500
+        return response
 
-API = Api(app)
-API.add_resource(Train, '/train')
-API.add_resource(Predict, '/predict')
-
+    @app.route('/', methods=['GET'])
+    def home():
+        return jsonify({
+            'Status': 'OK!',
+            'Available Endpoints': [f'/{rule.endpoint}' for rule in app.url_map.iter_rules() if rule.endpoint not in ['home', 'static']]
+        })
+    return app
 
 if __name__ == '__main__':
+    app = create_app()
     app.run(host='0.0.0.0')
